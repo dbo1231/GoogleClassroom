@@ -1,4 +1,4 @@
-# BlaynOS
+# Google Classroom
 
 A single-file Windows-inspired web OS UI.
 
@@ -15,7 +15,7 @@ A single-file Windows-inspired web OS UI.
 ## Project structure
 
 ```text
-BlaynOS/
+GoogleClassroom/
 ├── index.html
 ├── .nojekyll
 └── README.md
