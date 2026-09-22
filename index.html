@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlaynOS - Windows 11 Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --win-blue: #0078d4;
+            --win-bg: #1a1a1a;
+            --win-card: rgba(32, 32, 32, 0.7);
+            --win-border: rgba(255, 255, 255, 0.12);
+            --win-text: #ffffff;
+            --taskbar-bg: rgba(28, 28, 28, 0.8);
+            --acrylic: blur(40px) saturate(180%);
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at 50% 50%, #005a9e 0%, #001832 100%);
+            color: var(--win-text);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- Login Screen --- */
+        #loginScreen {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 3000; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(25px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .auth-window {
+            background: var(--win-card); backdrop-filter: var(--acrylic);
+            border-radius: 12px; border: 1px solid var(--win-border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            width: 350px; padding: 40px; text-align: center;
+            animation: winOpen 0.6s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        /* --- Window Management --- */
+        #browserWindow {
+            position: absolute;
+            top: 20px; left: 20px; right: 20px; bottom: 68px;
+            background: var(--win-bg);
+            border-radius: 8px;
+            border: 1px solid var(--win-border);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            animation: winOpen 0.4s ease-out;
+            z-index: 100;
+        }
+
+        /* --- Browser UI --- */
+        .browser-toolbar {
+            height: 45px;
+            background: var(--win-card);
+            backdrop-filter: var(--acrylic);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 10px;
+            border-bottom: 1px solid var(--win-border);
+        }
+
+        .nav-btn {
+            width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; cursor: pointer; transition: 0.2s;
+        }
+
+        .nav-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .address-bar {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--win-border);
+            border-radius: 20px;
+            padding: 6px 15px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .address-bar:focus { border-color: var(--win-blue); }
+
+        iframe { flex-grow: 1; border: none; background: white; }
+
+        /* --- Start Menu --- */
+        #startMenu {
+            position: absolute; bottom: 60px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            width: 500px; background: var(--win-card);
+            backdrop-filter: var(--acrylic); border: 1px solid var(--win-border);
+            border-radius: 12px; z-index: 1500; padding: 25px;
+            opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        #startMenu.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+
+        .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .app-item {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 8px; cursor: pointer; padding: 10px; border-radius: 6px; transition: 0.2s;
+        }
+        .app-item:hover { background: rgba(255,255,255,0.1); }
+        .app-icon { font-size: 24px; }
+
+        /* --- Taskbar --- */
+        .taskbar {
+            position: absolute; bottom: 0; width: 100%; height: 48px;
+            background: var(--taskbar-bg); backdrop-filter: var(--acrylic);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1600; border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .task-icon {
+            width: 40px; height: 40px; display: flex; justify-content: center;
+            align-items: center; border-radius: 6px; cursor: pointer; transition: 0.2s;
+        }
+        .task-icon:hover { background: rgba(255,255,255,0.1); }
+        .task-icon.active::after {
+            content: ''; position: absolute; bottom: 4px; width: 6px; height: 3px;
+            background: var(--win-blue); border-radius: 2px;
+        }
+
+        .system-tray {
+            position: absolute; right: 10px; display: flex; align-items: center; gap: 12px;
+        }
+
+        @keyframes winOpen {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loginScreen">
+    <div class="auth-window">
+        <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
+        <h2 style="font-weight: 400; margin-bottom: 25px;">Welcome to BlaynOS</h2>
+        <input id="codeInput" type="password" placeholder="PIN (blayn)" style="width: 80%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--win-border); border-bottom: 2px solid var(--win-blue); border-radius: 4px; color: white; text-align: center; outline: none; margin-bottom: 20px;" onkeydown="if(event.key === 'Enter') checkCode()">
+        <br>
+        <button onclick="checkCode()" style="background: var(--win-blue); color: white; border: none; padding: 8px 30px; border-radius: 4px; cursor: pointer;">Sign in</button>
+    </div>
+</div>
+
+<div id="browserWindow">
+    <div class="browser-toolbar">
+        <div class="nav-btn" onclick="history.back()">⬅️</div>
+        <div class="nav-btn" onclick="history.forward()">➡️</div>
+        <div class="nav-btn" onclick="refreshBrowser()">🔄</div>
+        <input id="browserAddress" class="address-bar" type="text" placeholder="Search or enter URL" onkeydown="if(event.key === 'Enter') navigateBrowser(this.value)">
+        <div class="nav-btn" onclick="closeBrowser()" style="color: #ff4d4d; font-weight: bold;">✕</div>
+    </div>
+    <iframe id="browserFrame" src="about:blank"></iframe>
+</div>
+
+<div id="startMenu">
+    <div style="font-size: 13px; margin-bottom: 15px; font-weight: 600;">Pinned Apps</div>
+    <div class="app-grid">
+        <div class="app-item" onclick="navigateBrowser('google.com')">
+            <span class="app-icon">🌐</span><span style="font-size:11px">Edge</span>
+        </div>
+        <div class="app-item" onclick="navigateBrowser('youtube.com')">
+            <span class="app-icon">📺</span><span style="font-size:11px">YouTube</span>
+        </div>
+        <div class="app-item" onclick="navigateBrowser('gn-math.dev')">
+            <span class="app-icon">🎮</span><span style="font-size:11px">Games</span>
+        </div>
+        <div class="app-item" onclick="location.reload()">
+            <span class="app-icon">🔄</span><span style="font-size:11px">Restart</span>
+        </div>
+    </div>
+</div>
+
+<div class="taskbar">
+    <div class="task-icon" onclick="toggleStartMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#00adef"><path d="M0 0h11.4v11.4H0V0zm12.6 0H24v11.4H12.6V0zM0 12.6h11.4V24H0V12.6zm12.6 0H24V24H12.6V12.6z"/></svg>
+    </div>
+    <div id="browserTaskIcon" class="task-icon" onclick="toggleBrowser()" title="Microsoft Edge">🌐</div>
+</div>
+
+<div class="system-tray">
+    <div id="clock" style="font-size: 12px; text-align: right; padding-right: 10px;">
+        <div id="time">--:--</div>
+        <div id="date" style="font-size: 10px; opacity: 0.7;">--/--/--</div>
+    </div>
+</div>
+
+<script>
+    const PASS_KEY = "blayn";
+    const frameBridge = "https://demo.webfuse.com/+iframetest/?url=https%3A%2F%2F";
+
+    function checkCode() {
+        if (document.getElementById("codeInput").value.toLowerCase() === PASS_KEY) {
+            document.getElementById("loginScreen").style.opacity = "0";
+            setTimeout(() => document.getElementById("loginScreen").style.display = "none", 800);
+        }
+    }
+
+    function toggleStartMenu() {
+        document.getElementById("startMenu").classList.toggle("visible");
+    }
+
+    function toggleBrowser() {
+        const win = document.getElementById("browserWindow");
+        const icon = document.getElementById("browserTaskIcon");
+        if (win.style.display === "flex") {
+            win.style.display = "none";
+            icon.classList.remove("active");
+        } else {
+            win.style.display = "flex";
+            icon.classList.add("active");
+            if (!document.getElementById("browserFrame").src || document.getElementById("browserFrame").src.includes("about:blank")) {
+                navigateBrowser('google.com');
+            }
+        }
+    }
+
+    function closeBrowser() {
+        document.getElementById("browserWindow").style.display = "none";
+        document.getElementById("browserTaskIcon").classList.remove("active");
+    }
+
+    function navigateBrowser(val) {
+        if (!val) return;
+        document.getElementById("startMenu").classList.remove("visible");
+        document.getElementById("browserWindow").style.display = "flex";
+        document.getElementById("browserTaskIcon").classList.add("active");
+
+        let target = val.trim();
+        if (!target.includes('.') || target.includes(' ')) {
+            target = "www.google.com/search?q=" + encodeURIComponent(target);
+        }
+        
+        document.getElementById("browserAddress").value = target;
+        document.getElementById("browserFrame").src = frameBridge + target.replace(/^https?:\/\//, '');
+    }
+
+    function refreshBrowser() {
+        const frame = document.getElementById("browserFrame");
+        const currentSrc = frame.src;
+        frame.src = "about:blank";
+        setTimeout(() => frame.src = currentSrc, 50);
+    }
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById("time").innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById("date").innerText = now.toLocaleDateString();
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Close menus when clicking desktop
+    window.onclick = function(e) {
+        if (!e.target.closest('.task-icon') && !e.target.closest('#startMenu')) {
+            document.getElementById("startMenu").classList.remove("visible");
+        }
+    }
+</script>
+
+</body>
+</html>
